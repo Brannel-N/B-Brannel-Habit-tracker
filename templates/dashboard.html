@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h3>Dashboard</h3>
+  <a class="btn btn-success" href="{{ url_for('add_habit') }}">+ Add Habit</a>
+</div>
+
+<div class="row">
+  <div class="col-md-7">
+    <div class="card mb-3">
+      <div class="card-body">
+        <h5>Your Habits</h5>
+        <ul class="list-group">
+          {% for h in habits %}
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+              <div>
+                <strong>{{ h.name }}</strong><br>
+                <small class="text-muted">{{ h.note }}</small>
+              </div>
+              <div>
+                <button class="btn btn-outline-primary btn-sm me-1" onclick="toggle({{ h.id }}, this)">{% if h.id in completed_today %}✓{% else %}Mark{% endif %}</button>
+                <a class="btn btn-sm btn-secondary me-1" href="{{ url_for('edit_habit', hid=h.id) }}">Edit</a>
+                <form style="display:inline" method="post" action="{{ url_for('delete_habit', hid=h.id) }}" onsubmit="return confirm('Delete?')">
+                  <button class="btn btn-sm btn-danger">Delete</button>
+                </form>
+              </div>
+            </li>
+          {% endfor %}
+          {% if not habits %}
+            <li class="list-group-item">No habits yet — add one.</li>
+          {% endif %}
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-5">
+    <div class="card mb-3">
+      <div class="card-body">
+        <h5>Progress (last 14 days)</h5>
+        <canvas id="progressChart" height="200"></canvas>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-body">
+        <h6>Quick tips</h6>
+        <ul>
+          <li>Keep habits small and measurable.</li>
+          <li>Use streaks to motivate consistency.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+async function toggle(hid, btn){
+  btn.disabled = true;
+  const res = await fetch('/habit/toggle/' + hid, {method:'POST'});
+  const j = await res.json();
+  if(j.ok){
+    btn.innerText = j.status === 'done' ? '✓' : 'Mark';
+    loadChart();
+  } else {
+    alert('Error toggling');
+  }
+  btn.disabled = false;
+}
+
+async function loadChart(){
+  const r = await fetch('/api/stats');
+  const j = await r.json();
+  const ctx = document.getElementById('progressChart').getContext('2d');
+  if(window._chart) window._chart.destroy();
+  window._chart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: j.days,
+      datasets: [{ label: 'Habits completed', data: j.counts }]
+    },
+    options: { responsive:true, maintainAspectRatio:false }
+  });
+}
+
+window.addEventListener('load', loadChart);
+</script>
+{% endblock %}
