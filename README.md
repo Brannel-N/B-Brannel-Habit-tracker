@@ -51,8 +51,4 @@ git branch -M main
 git push -u origin main
 ```
 
-## Security note
-- Your MySQL password is included in `app.py` and `db_init.py` for convenience. **Do not push these files to a public repository** unless you remove or secure credentials (use environment variables or a `.env` file).
-- Replace `app.secret_key` with a secure random value before using in production.
 
-Enjoy — let me know if you want features like email reminders, social login, or mobile API endpoints!
